@@ -18,3 +18,5 @@ That being said, you need to manually build one of the dependencies (and possibl
 [Windows API Code Pack - Shell](https://github.com/contre/Windows-API-Code-Pack-1.1) - [License](https://github.com/contre/Windows-API-Code-Pack-1.1/blob/master/LICENSE)
 
 [Material Design In XAML Toolkit](https://github.com/MaterialDesignInXAML/MaterialDesignInXamlToolkit) - [License](https://github.com/MaterialDesignInXAML/MaterialDesignInXamlToolkit/blob/master/LICENSE)
+
+Added option to export missing files only on this fork.
