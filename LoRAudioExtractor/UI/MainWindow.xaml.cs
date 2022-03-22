@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Linq;
 using LoRAudioExtractor.Extractor;
 using LoRAudioExtractor.Wwise;
 using Microsoft.WindowsAPICodePack.Dialogs;
@@ -54,14 +55,15 @@ namespace LoRAudioExtractor.UI
         private void Load(LoRExtractor.AudioType audioType)
         {
             using CommonOpenFileDialog dialog = new () {
-                InitialDirectory = "C:\\Riot Games\\",
+                InitialDirectory = "D:\\Riot Games\\LoR\\",
                 Title = "Please select Legends of Runeterra's root directory",
                 IsFolderPicker = true
             };
 
             if (dialog.ShowDialog() != CommonFileDialogResult.Ok) 
                 return;
-            
+
+
             string fileName = dialog.FileName;
 
             this.ExportMenu.IsEnabled = false;
@@ -197,6 +199,14 @@ namespace LoRAudioExtractor.UI
             
             this.ExtractItems(this._dataContainer.Items);
             
+        }
+
+        private void ExtractMissing_Click(object sender, RoutedEventArgs e)
+        {
+            if (this._dataContainer == null)
+                return;
+
+            this.ExtractItemsMissing(this._dataContainer.Items);
         }
 
         private void ExtractItems(IList items)
@@ -348,5 +358,169 @@ namespace LoRAudioExtractor.UI
             progressWindow.Closed += CancelDelegate;
             progressWindow.ShowDialog();
         }
+
+
+
+        private void ExtractItemsMissing(IList items)
+        {
+            using CommonOpenFileDialog dialog = new()
+            {
+                Title = "Please select a directory to output missing files",
+                IsFolderPicker = true
+            };
+
+            if (dialog.ShowDialog() != CommonFileDialogResult.Ok)
+                return;
+
+            string targetDir = dialog.FileName;
+
+            if (!Directory.Exists(targetDir))
+            {
+                MessageBox.Show(this, $"Could not open {targetDir}.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            ExportProgressWindow progressWindow = new();
+            progressWindow.ExtractedCount.Text = $"0 / {items.Count}(0.00%)";
+            progressWindow.ExtractProgress.Minimum = 0;
+            progressWindow.ExtractProgress.Maximum = items.Count;
+            progressWindow.ExtractProgress.Value = 0;
+            progressWindow.Owner = this;
+
+            var ctSource = new CancellationTokenSource();
+            var ct = ctSource.Token;
+
+            void CancelDelegate(object? sender, EventArgs args)
+            {
+                ctSource.Cancel();
+            }
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        this.ExportMenu.IsEnabled = false;
+                        this.LoadVOMenuOption.IsEnabled = false;
+                        this.LoadSFXMenuOption.IsEnabled = false;
+                    });
+
+                    int count = -1;
+
+                    bool hadBanks = false;
+
+                    foreach (var selectedItem in items)
+                    {
+                        if (ct.IsCancellationRequested)
+                        {
+                            ct.ThrowIfCancellationRequested();
+                        }
+
+                        count++;
+
+                        int countVal = count;
+
+                        if (selectedItem is not ExtractableItem item)
+                            continue;
+
+                        this.Dispatcher.Invoke(() =>
+                        {
+                            progressWindow.CurrentExtracted.Text = $"Extracting... {item.Name}";
+                            progressWindow.ExtractedCount.Text = $"{countVal} / {items.Count} ({(countVal / (double)items.Count * 100):F2}%)";
+                            progressWindow.ExtractProgress.Value = countVal;
+                        });
+
+                        if (item.ArchiveEntry == null)
+                            continue;
+
+
+                        string outPath = Path.Join(targetDir, item.Name);
+
+                        if (!outPath.Contains("."))
+                            outPath += ".wav";
+
+                        if (outPath.EndsWith(".wem"))
+                            outPath = Regex.Replace(outPath, @"\.wem$", ".wav");
+
+
+                        if (File.Exists(outPath))
+                            continue;
+
+                        if (File.Exists(outPath))
+                            continue;
+
+                        byte[] data = item.ArchiveEntry.ExtractAndRead(out bool isWem);
+
+
+                        hadBanks |= isWem;
+
+                        string outDir = Path.GetDirectoryName(outPath)!;
+                        Directory.CreateDirectory(outDir);
+                        File.WriteAllBytes(outPath, data);
+                    }
+
+                    if (hadBanks && !this.OfferedWW2OGG)
+                        this.Dispatcher.Invoke(() =>
+                        {
+                            var result = MessageBox.Show(this, "You extracted some files not processable by this extractor.\n" +
+                                                  $"Consider using {WW2OGG_URL} for .WAV and .BNK files.\n" +
+                                                  "Do you want to visit that page?",
+                                "Information", MessageBoxButton.YesNo, MessageBoxImage.Information);
+
+                            if (result == MessageBoxResult.Yes)
+                            {
+                                try
+                                {
+                                    Process.Start(new ProcessStartInfo
+                                    {
+                                        FileName = WW2OGG_URL,
+                                        UseShellExecute = true
+                                    });
+                                }
+                                catch (Exception)
+                                {
+                                    MessageBox.Show(this, $"See {WW2OGG_URL}.", "Repository URL");
+                                }
+                            }
+
+                            this.OfferedWW2OGG = true;
+                        });
+                }
+                catch (OperationCanceledException)
+                {
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show(this, "Extraction cancelled.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    });
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show(this, "An error has ocurred while exporting files.\n" +
+                                              "Please make sure you have write access to the target directory.",
+                            "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    });
+                }
+                finally
+                {
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        progressWindow.Closed -= CancelDelegate;
+                        progressWindow.Close();
+                        this.ExportMenu.IsEnabled = true;
+                        this.LoadVOMenuOption.IsEnabled = true;
+                        this.LoadSFXMenuOption.IsEnabled = true;
+                    });
+                }
+            }, ct);
+
+            progressWindow.Closed += CancelDelegate;
+            progressWindow.ShowDialog();
+        }
+
     }
 }

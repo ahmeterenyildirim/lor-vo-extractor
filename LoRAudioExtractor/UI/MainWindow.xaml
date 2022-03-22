@@ -28,6 +28,7 @@
                 <MenuItem Header="E_xport" x:Name="ExportMenu" IsEnabled="False">
                     <MenuItem Header="Export _all" Click="ExtractAll_Click" />
                     <MenuItem Header="Export _selected" Click="ExtractSelected_Click" />
+                    <MenuItem Header="Export _missing_files" Click="ExtractMissing_Click" />
                 </MenuItem>
                 <MenuItem Header="About">
                     <MenuItem Header="Source code" Click="SourceCode_Click" />

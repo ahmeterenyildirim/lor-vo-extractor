@@ -73,8 +73,26 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Reference Include="AssetStudio">
+        <HintPath>..\AssetStudio\AssetStudio\obj\Debug\AssetStudio.dll</HintPath>
+      </Reference>
       <Reference Include="AssetStudio, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
         <HintPath>..\AssetStudio\AssetStudioUtility\bin\Release\AssetStudio.dll</HintPath>
+      </Reference>
+      <Reference Include="AssetStudio.PInvoke">
+        <HintPath>..\AssetStudio\AssetStudioUtility\bin\Debug\AssetStudio.PInvoke.dll</HintPath>
+      </Reference>
+      <Reference Include="AssetStudioUtility">
+        <HintPath>..\AssetStudio\AssetStudioUtility\obj\Debug\AssetStudioUtility.dll</HintPath>
+      </Reference>
+      <Reference Include="Unity.Cecil">
+        <HintPath>..\AssetStudio\AssetStudioUtility\bin\Debug\Unity.Cecil.dll</HintPath>
+      </Reference>
+      <Reference Include="Unity.CecilTools">
+        <HintPath>..\AssetStudio\AssetStudioUtility\bin\Debug\Unity.CecilTools.dll</HintPath>
+      </Reference>
+      <Reference Include="Unity.SerializationLogic">
+        <HintPath>..\AssetStudio\AssetStudioUtility\bin\Debug\Unity.SerializationLogic.dll</HintPath>
       </Reference>
     </ItemGroup>
 
