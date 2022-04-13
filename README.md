@@ -20,4 +20,4 @@ That being said, you need to manually build one of the dependencies (and possibl
 [Material Design In XAML Toolkit](https://github.com/MaterialDesignInXAML/MaterialDesignInXamlToolkit) - [License](https://github.com/MaterialDesignInXAML/MaterialDesignInXamlToolkit/blob/master/LICENSE)
 
 ## Extras 
-Added option to export missing files only on this fork.
+Added option to "export missing files only" in this fork.
